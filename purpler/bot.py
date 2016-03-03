@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class PurplerBot(bot.SingleServerIRCBot):
     def __init__(self, db_url, server, port, channels, nickname,
-                 password, server_password=None):
+                 password, darkchannels, server_password=None):
         if port == 6697:
             factory = connection.Factory(wrapper=ssl.wrap_socket)
             super(PurplerBot, self).__init__([(server, port, server_password)],
@@ -33,6 +33,7 @@ class PurplerBot(bot.SingleServerIRCBot):
                                             nickname, nickname)
 
         self.channel_list = channels
+        self.darkchannels = darkchannels
         self.nickname = nickname
         self.password = password
         self.log = logging.getLogger(__name__)
@@ -63,7 +64,6 @@ class PurplerBot(bot.SingleServerIRCBot):
         # for that is to see them or just log them.
         message = e.arguments[0]
         nick = e.source.nick
-        self.log.debug('Got message %s', message)
         result = TRANSCLUDER.search(message)
         if result:
             guid = result.group(1)
@@ -71,8 +71,10 @@ class PurplerBot(bot.SingleServerIRCBot):
             outgoing_message = self.storage.get(guid)
             if outgoing_message:
                 c.privmsg(e.target, '%s: %s' % (outgoing_message.content, outgoing_message.guid))
-        guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
-        self.log.debug('Logged guid: %s', guid)
+        if e.target not in self.darkchannels:
+            self.log.debug('Got message %s', message)
+            guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
+            self.log.debug('Logged guid: %s', guid)
 
 
 def run():
@@ -110,7 +112,14 @@ def run():
         nargs='?', default=None,
         dest='channels',
         action='append',
-        help='With each use add a channel on which the bot should listen'
+        help='With each use add a channel on which the bot should listen. Use # in channel name.'
+    )
+    parser.add_argument(
+        '-n', '--no-log',
+        nargs='?', default=None,
+        dest='darkchannels',
+        action='append',
+        help='Channels in the channel list that should not log. Use # in channel name.'
     )
     args = parser.parse_args()
 
@@ -119,5 +128,5 @@ def run():
 
 
     bot = PurplerBot(args.db_url, server, port, args.channels,
-                     args.nickname, args.password)
+                     args.nickname, args.password, args.darkchannels)
     bot.start()
