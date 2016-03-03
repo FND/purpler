@@ -16,12 +16,12 @@ TEMPLATE_ENV = None
 
 class StoreSet(object):
 
-    def __init__(self, application=None):
+    def __init__(self, application=None, db_url=None):
         self.application = application
+        self.db_url = db_url or 'sqlite:////tmp/purpler'
 
     def __call__(self, environ, start_response):
-        # Made a typo elsewhere so carrying it while testing.
-        storage = store.Store('sqlite:////tmp/purlerbot')
+        storage = store.Store(self.db_url)
         environ['purpler.store'] = storage
         return self.application(environ, start_response)
 
@@ -63,6 +63,7 @@ def lines_by_datetime(environ, start_response):
     # XXX currently IRC only
     if timestamp:
         timestamp = iso8601.parse_date(timestamp)
+    # XXX The log does not contain messages from purplerbot itself.
     lines = store.get_by_time_in_context('#%s' % context, timestamp)
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8')])
@@ -73,7 +74,7 @@ def load_app():
     app = Selector()
     app.add('/logs/{context:segment}', GET=lines_by_datetime)
     app.add('/{nid:segment}', GET=get_via_nid)
-    app = StoreSet(app)
+    app = StoreSet(app, os.environ.get('PURPLER_DB_URL'))
     app = httpexceptor.HTTPExceptor(app)
 
     return app

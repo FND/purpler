@@ -5,6 +5,7 @@
 # https://github.com/openstack-infra/gerritbot/blob/master/gerritbot/bot.py
 # https://github.com/jaraco/irc/blob/master/scripts/testbot.py
 
+import argparse
 import logging
 import re
 import ssl
@@ -20,7 +21,7 @@ TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
 logging.basicConfig(level=logging.DEBUG)
 
 class PurplerBot(bot.SingleServerIRCBot):
-    def __init__(self, dbname, server, port, channels, nickname,
+    def __init__(self, db_url, server, port, channels, nickname,
                  password, server_password=None):
         if port == 6697:
             factory = connection.Factory(wrapper=ssl.wrap_socket)
@@ -35,7 +36,7 @@ class PurplerBot(bot.SingleServerIRCBot):
         self.nickname = nickname
         self.password = password
         self.log = logging.getLogger(__name__)
-        self.storage = store.Store('sqlite:////tmp/%s' % dbname)
+        self.storage = store.Store(db_url)
 
     def on_nicknameinuse(self, c, e):
         self.log.info('Nick previously in use, recovering.')
@@ -57,6 +58,9 @@ class PurplerBot(bot.SingleServerIRCBot):
             time.sleep(0.5)
 
     def on_pubmsg(self, c, e):
+        # XXX at the moment we don't see messages that we send so
+        # the outgoing message is not logged. Not sure if the fix
+        # for that is to see them or just log them.
         message = e.arguments[0]
         nick = e.source.nick
         self.log.debug('Got message %s', message)
@@ -72,18 +76,48 @@ class PurplerBot(bot.SingleServerIRCBot):
 
 
 def run():
-    try:
-        dbname = sys.argv[1] 
-        server, port = sys.argv[2].split(':')
-        channels = [sys.argv[3]]
-    except IndexError:
-        dbname = 'purlerbot'
-        server = 'chat.freenode.net'
-        port = 6697
-        channels = ['#tiddlyweb']
 
-    nickname = 'purplerbot'
-    password = 'purplerbot'
+    # TODO: see
+    # http://stackoverflow.com/questions/27433316/how-to-get-argparse-to-read-arguments-from-a-file-with-an-option-rather-than-pre
+    # for loading args from a file
+    parser = argparse.ArgumentParser(description='Run the irc bot')
+    parser.add_argument(
+        '--db_url',
+        dest='db_url',
+        default='sqlite:////tmp/purpler',
+        help='A db_url that describes where stuff will be stored'
+    )
+    parser.add_argument(
+        '--irc_server',
+        dest='server',
+        default='chat.freenode.net:6697',
+        help='IRC host:port'
+    )
+    parser.add_argument(
+        '--nickname',
+        dest='nickname',
+        default='purplerbot',
+        help='Nickname for the bot'
+    )
+    parser.add_argument(
+        '--password',
+        dest='password',
+        default='purplerbot',
+        help='Password for the bot'
+    )
+    parser.add_argument(
+        '-c', '--channel',
+        nargs='?', default=None,
+        dest='channels',
+        action='append',
+        help='With each use add a channel on which the bot should listen'
+    )
+    args = parser.parse_args()
 
-    bot = PurplerBot(dbname, server, port, channels, nickname, password)
+    server, port = args.server.split(':', 1)
+    port = int(port)
+
+
+    bot = PurplerBot(args.db_url, server, port, args.channels,
+                     args.nickname, args.password)
     bot.start()
