@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <title>hey oh</title>
+    </head>
+    <body>
+{% for line in lines %}
+<p id="{{ line.guid }}">[{{ line.when }}] {{line.content}} <a class="guid" href="/{{ line.guid}}">{{ line.guid }}</a></p>
+{% endfor %}
+    </body>
+</html>
+

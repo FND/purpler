@@ -34,7 +34,7 @@ class PurplerBot(bot.SingleServerIRCBot):
         self.channel_list = channels
         self.nickname = nickname
         self.password = password
-        self.log = logging.getLogger('purplebot')
+        self.log = logging.getLogger(__name__)
         self.storage = store.Store('sqlite:////tmp/%s' % dbname)
 
     def on_nicknameinuse(self, c, e):
@@ -59,16 +59,16 @@ class PurplerBot(bot.SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         message = e.arguments[0]
         nick = e.source.nick
-        self.log.info('Got message %s', message)
+        self.log.debug('Got message %s', message)
         result = TRANSCLUDER.search(message)
         if result:
-            self.log.info('saw result %s',result)
             guid = result.group(1)
-            self.log.info('saw guid %s', guid)
+            self.log.debug('saw guid %s', guid)
             outgoing_message = self.storage.get(guid)
             if outgoing_message:
                 c.privmsg(e.target, '%s: %s' % (outgoing_message.content, outgoing_message.guid))
-        self.storage.put(content='%s: %s' % (nick, message))
+        guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
+        self.log.debug('Logged guid: %s', guid)
 
 
 def run():
@@ -77,7 +77,7 @@ def run():
         server, port = sys.argv[2].split(':')
         channels = [sys.argv[3]]
     except IndexError:
-        dbname = 'tiddlyweb'
+        dbname = 'purlerbot'
         server = 'chat.freenode.net'
         port = 6697
         channels = ['#tiddlyweb']

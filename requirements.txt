@@ -1,2 +1,5 @@
 irc
+iso8601
+jinja2
+selector
 sqlalchemy
