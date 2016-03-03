@@ -42,10 +42,15 @@ class Store(object):
         text = self.session.query(Text).filter_by(guid=guid).first()
         return text
 
-    def put(self, content=None):
+    def put(self, guid=None, url=None, content=None):
+        # If something with the provided guid already exists, we'll
+        # raise an error and the caller is expected to try again. I
+        # considered doing that looping in here but it upsets the
+        # mechanics of things that are providing their own guids.
         try:
-            guid = base62.guid()
-            text = Text(guid=guid, content=content)
+            if not guid:
+                guid = base62.guid()
+            text = Text(guid=guid, url=url, content=content)
             self.session.add(text)
             self.session.commit()
         except:

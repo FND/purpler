@@ -11,10 +11,12 @@ def setup_module(module):
 
 def test_table_stores():
 
-    guid = storage.put('i am some text')
+    guid = storage.put(content='i am some text')
     text = storage.get(guid)
 
     assert text.content == 'i am some text'
     assert text.guid == guid
     assert text.url == None
     assert isinstance(text.when, datetime.datetime)
+
+    guid = storage.put(guid=guid, content='i am some text')
