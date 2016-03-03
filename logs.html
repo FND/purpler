@@ -1,0 +1,12 @@
+<html>
+    <head>
+        <title>logs</title>
+    </head>
+    <body>
+        <ul>
+{% for log in logs %}
+<li><a href="/logs/{{ log.url|replace("#", "") }}">{{ log.url }}</a></li>
+{% endfor %}
+        </ul>
+    </body>
+</html>

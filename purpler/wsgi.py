@@ -16,12 +16,12 @@ TEMPLATE_ENV = None
 
 class StoreSet(object):
 
-    def __init__(self, application=None, db_url=None):
+    def __init__(self, application=None):
         self.application = application
-        self.db_url = db_url or 'sqlite:////tmp/purpler'
 
     def __call__(self, environ, start_response):
-        storage = store.Store(self.db_url)
+        # XXX messy
+        storage = store.Store(environ.get('PURPLER_DB_URL', 'sqlite:////tmp/purpler'))
         environ['purpler.store'] = storage
         return self.application(environ, start_response)
 
@@ -30,7 +30,7 @@ def render(template_file, **kwargs):
     global TEMPLATE_ENV
     if not TEMPLATE_ENV:
         TEMPLATE_ENV = jinja2.Environment(
-            loader=jinja2.FileSystemLoader('.', encoding='utf-8'))  # FIXME
+            loader=jinja2.FileSystemLoader('/home/cdent/src/purpler', encoding='utf-8'))  # FIXME
     template = TEMPLATE_ENV.get_template(template_file)
     # FIXME: would prefer generate here but encoding
     return [template.render(**kwargs).encode('utf-8')]
@@ -70,11 +70,20 @@ def lines_by_datetime(environ, start_response):
     return render('irc.html', lines=lines)
 
 
+def logs_list(environ, start_response):
+    store = environ['purpler.store']
+    logs = store.get_logs()
+
+    start_response('200 OK', [('content-type', 'text/html; charset=utf-8')])
+    return render('logs.html', logs=logs)
+
+
 def load_app():
     app = Selector()
     app.add('/logs/{context:segment}', GET=lines_by_datetime)
+    app.add('/logs', GET=logs_list)
     app.add('/{nid:segment}', GET=get_via_nid)
-    app = StoreSet(app, os.environ.get('PURPLER_DB_URL'))
+    app = StoreSet(app)
     app = httpexceptor.HTTPExceptor(app)
 
     return app

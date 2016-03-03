@@ -79,6 +79,12 @@ class Store(object):
         return results
 
 
+    def get_logs(self):
+        # XXX irc specific (again)
+        query = self.session.query(Text).group_by(Text.url).order_by(Text.url)
+        return query.all()
+
+
     def put(self, guid=None, url=None, content=None):
         # If something with the provided guid already exists, we'll
         # raise an error and the caller is expected to try again. I

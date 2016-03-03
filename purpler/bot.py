@@ -16,6 +16,12 @@ from irc import bot, connection
 
 from purpler import store
 
+COMMANDS = {
+    'log': 'show_log',
+    'logs': 'show_logs',
+    'help': 'show_help',
+}
+COMMANDER = re.compile('^p!(%s)$' % '|'.join(COMMANDS.keys()))
 TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
@@ -58,12 +64,34 @@ class PurplerBot(bot.SingleServerIRCBot):
             self.log.info('Joined channel %s' % channel)
             time.sleep(0.5)
 
+    def show_help(self, c, e):
+        nick = e.source.nick
+        c.privmsg(nick, 'p!log to get the URL of the log of the current channel')
+        c.privmsg(nick, 'p!logs to get the URL of all available logs')
+
+    def show_log(self, c, e):
+        nick = e.source.nick
+        channel = e.target.replace('#', '')
+        # XXX static url
+        c.privmsg(nick, 'log at http://p.anticdent.org/logs/%s' % channel)
+
+    def show_logs(self, c, e):
+        nick = e.source.nick
+        # XXX static url
+        c.privmsg(nick, 'logs at http://p.anticdent.org/logs')
+
     def on_pubmsg(self, c, e):
         # XXX at the moment we don't see messages that we send so
         # the outgoing message is not logged. Not sure if the fix
         # for that is to see them or just log them.
-        message = e.arguments[0]
         nick = e.source.nick
+        message = e.arguments[0]
+
+        command = COMMANDER.search(message)
+        if command:
+            command = command.group(1)
+            return getattr(self, COMMANDS[command])(c, e)
+
         result = TRANSCLUDER.search(message)
         if result:
             guid = result.group(1)
