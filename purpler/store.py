@@ -9,6 +9,7 @@ from sqlalchemy import event
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import DisconnectionError
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.sql.functions import now
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.schema import Table, Column, UniqueConstraint
@@ -21,6 +22,9 @@ Session = scoped_session(sessionmaker())
 
 
 LOGGER = logging.getLogger(__name__)
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)
 
 
 def on_checkout(dbapi_con, con_record, con_proxy):
@@ -99,17 +103,22 @@ class Store(object):
             Text.url == url, Text.when >= timeless,
             Text.when <= timemore)
         if containing:
-            containing = '%%%s%%' % containing
-            query = query.filter(Text.content.like(containing))
-        query = query.order_by(Text.when)
+            # XXX hack to avoid finding nick at that start of text
+            intro = containing + ':%'
+            containing = '%' + containing + '%'
+            query = query.filter(and_(not_(Text.content.like(intro))),
+                                 Text.content.like(containing))
         if count:
-            query = query.limit(count)
+            query = (query.order_by(Text.when.desc()).
+                     limit(count).from_self().order_by(Text.when))
+        else:
+            query = query.order_by(Text.when)
         results = query.all()
         # If we don't get any results go back in time up to 12 hours
         if not results and rlimit < 12:
             rlimit = rlimit +1
-            return self.get_by_time_in_context(url, time=timeless,
-                                               rlimit=rlimit)
+            return self.get_by_time_in_context(url, time=timeless, count=count,
+                                               containing=containing, rlimit=rlimit)
         return results
 
 
