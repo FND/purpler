@@ -85,7 +85,8 @@ class Store(object):
         else:
             return []
 
-    def get_by_time_in_context(self, url, time=None, count=None, rlimit=1):
+    def get_by_time_in_context(self, url, time=None, count=None,
+                               containing=None, rlimit=1):
         one_hour = datetime.timedelta(minutes=60)
         if time:
             timeless = time - one_hour
@@ -96,7 +97,11 @@ class Store(object):
             timemore = now + one_hour
         query = self.session.query(Text).filter(
             Text.url == url, Text.when >= timeless,
-            Text.when <= timemore).order_by(Text.when)
+            Text.when <= timemore)
+        if containing:
+            containing = '%%%s%%' % containing
+            query = query.filter(Text.content.like(containing))
+        query = query.order_by(Text.when)
         if count:
             query = query.limit(count)
         results = query.all()

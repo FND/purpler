@@ -21,6 +21,7 @@ COMMANDS = {
     'logs': 'show_logs',
     'help': 'show_help',
     'hist': 'show_history',
+    'spy':  'show_mentions',
 }
 COMMANDER = re.compile('^p!(%s)$' % '|'.join(COMMANDS.keys()))
 TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
@@ -69,12 +70,21 @@ class PurplerBot(bot.SingleServerIRCBot):
         nick = e.source.nick
         c.privmsg(nick, 'p!log to get the URL of the log of the current channel')
         c.privmsg(nick, 'p!logs to get the URL of all available logs')
-        c.privmsg(nick, 'p!hist last 10 messages in the recent past')
+        c.privmsg(nick, 'p!hist up to last 10 messages in the recent past')
+        c.privmsg(nick, 'p!spy last 10 mentions (fuzzy) in the recent past')
 
     def show_history(self, c, e):
         nick = e.source.nick
         url = e.target
         lines = self.storage.get_by_time_in_context(url=url, count=10)
+        for line in lines:
+            c.privmsg(nick, '%s: %s' % (line.when, line.content))
+
+    def show_mentions(self, c, e):
+        nick = e.source.nick
+        url = e.target
+        lines = self.storage.get_by_time_in_context(url=url, count=10,
+                containing=nick)
         for line in lines:
             c.privmsg(nick, '%s: %s' % (line.when, line.content))
 
