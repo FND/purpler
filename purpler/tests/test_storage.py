@@ -1,5 +1,7 @@
 
 import datetime
+import py.test
+from sqlalchemy.orm import exc
 
 from purpler import store
 
@@ -19,4 +21,5 @@ def test_table_stores():
     assert text.url == None
     assert isinstance(text.when, datetime.datetime)
 
-    guid = storage.put(guid=guid, content='i am some text')
+    py.test.raises(exc.FlushError,
+                   'storage.put(guid=guid, content="i am some text")')

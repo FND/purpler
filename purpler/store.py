@@ -69,7 +69,8 @@ class Store(object):
             Session.configure(bind=engine)
             Base.metadata.create_all(engine)
             Store.mapped = True
-            event.listen(engine, 'checkout', on_checkout)
+            if engine.name == 'mysql':
+                event.listen(engine, 'checkout', on_checkout)
 
         self.session = Session()
 
