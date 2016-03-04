@@ -53,7 +53,8 @@ class Text(Base):
      guid = Column(String(12), primary_key=True, nullable=False)
      url = Column(String(255), nullable=True, index=True)
      content = Column(UnicodeText, nullable=True)
-     when = Column(DateTime(timezone=True), server_default=now())
+     when = Column(DateTime(timezone=True), index=True,
+                   server_default=now())
 
 
 class Store(object):
