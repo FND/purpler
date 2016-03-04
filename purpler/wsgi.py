@@ -66,7 +66,8 @@ def lines_by_datetime(environ, start_response):
     # XXX The log does not contain messages from purplerbot itself.
     lines = store.get_by_time_in_context('#%s' % context, timestamp)
 
-    start_response('200 OK', [('content-type', 'text/html; charset=utf-8')])
+    start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
+        ('Cache-Control', 'no-cache, no-store, must-revalidate')])
     return render('irc.html', lines=lines)
 
 
@@ -74,7 +75,8 @@ def logs_list(environ, start_response):
     store = environ['purpler.store']
     logs = store.get_logs()
 
-    start_response('200 OK', [('content-type', 'text/html; charset=utf-8')])
+    start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
+        ('Cache-Control', 'no-cache, no-store, must-revalidate')])
     return render('logs.html', logs=logs)
 
 
