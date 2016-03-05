@@ -18,11 +18,13 @@ TEMPLATE_ENV = None
 class StoreSet(object):
 
     def __init__(self, application=None):
+        # XXX Need real config, doing this for now for expediency.
+        with open('/home/cdent/src/purpler/db_url') as dbfile:
+            self.dbname = dbfile.read().strip()
         self.application = application
 
     def __call__(self, environ, start_response):
-        # XXX messy
-        storage = store.Store(environ.get('PURPLER_DB_URL', 'sqlite:////tmp/purpler'))
+        storage = store.Store(self.dbname)
         environ['purpler.store'] = storage
         return self.application(environ, start_response)
 
