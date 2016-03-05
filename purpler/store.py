@@ -64,13 +64,13 @@ class Store(object):
     def __init__(self, dburi):
         engine = create_engine(dburi)
         Base.metadata.bind = engine
+        if engine.name == 'mysql':
+            event.listen(engine, 'checkout', on_checkout)
 
         if not Store.mapped:
             Session.configure(bind=engine)
             Base.metadata.create_all(engine)
             Store.mapped = True
-            if engine.name == 'mysql':
-                event.listen(engine, 'checkout', on_checkout)
 
         self.session = Session()
 
