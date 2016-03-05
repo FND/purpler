@@ -1,8 +1,9 @@
 
 import os
+import datetime
 import sys
 
-
+import bleach
 import httpexceptor
 import iso8601
 import jinja2
@@ -52,8 +53,16 @@ def get_via_nid(environ, start_response):
             raise httpexceptor.HTTP302('/logs/%s?dated=%s#%s' % (context, text.when, text.guid))
     else:
         raise httpexceptor.HTTP404('we got nothing for you mate')
-
     
+
+def format_irc_lines(lines):
+    for line in lines:
+        content = line.content
+        nick, content = content.split(':', 1)
+        content = bleach.linkify(content)
+        content = dict(nick=nick, message=content)
+        yield dict(when=line.when, guid=line.guid, content=content)
+
 
 def lines_by_datetime(environ, start_response):
     store = environ['purpler.store']
@@ -63,12 +72,15 @@ def lines_by_datetime(environ, start_response):
     # XXX currently IRC only
     if timestamp:
         timestamp = iso8601.parse_date(timestamp)
+    else:
+        timestamp = datetime.datetime.utcnow()
     # XXX The log does not contain messages from purplerbot itself.
     lines = store.get_by_time_in_context('#%s' % context, timestamp)
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
         ('Cache-Control', 'no-cache, no-store, must-revalidate')])
-    return render('irc.html', lines=lines)
+    return render('irc.html', lines=format_irc_lines(lines), channel=context,
+                  timestamp=timestamp)
 
 
 def logs_list(environ, start_response):

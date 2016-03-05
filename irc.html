@@ -1,10 +1,25 @@
 <html>
     <head>
-        <title>hey oh</title>
+        <title>Log for {{ channel }} near {{ timestamp }}</title>
+        <link rel="stylesheet" href="/style.css" media="screen" />
     </head>
     <body>
+        <header>
+            <ul>
+                <li><a href="/logs">More Logs</a></li>
+                <li><a href="/logs/{{ channel }}">Latest</a></li>
+            </ul>
+        </header>
+        <h1>Log for {{ channel }} near {{ timestamp }}</h1>
 {% for line in lines %}
-<p id="{{ line.guid }}">[{{ line.when }}] {{line.content}} <a class="guid" href="/{{ line.guid}}">{{ line.guid }}</a></p>
+    <div class="message" id="{{ line.guid }}">
+        <cite><a href="/{{ line.guid}}">{{ line.guid }}</a></cite>
+        <ul class="meta">
+            <li>{{ line.when }}</li>
+            <li>{{ line.content.nick }}</li>
+        </ul>
+        <p>{{ line.content.message }}</p>
+    </div>
 {% endfor %}
     </body>
 </html>

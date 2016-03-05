@@ -1,0 +1,85 @@
+
+body {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.2em 1em;
+    /* font-family: Palatino, Georgia, Times,
+    * "Times New Roman", serif; */
+    font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    /* font-size: 20px; */
+    line-height: 160%;
+    /* text-align: justify; */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-hyphens: auto;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+header ul {
+    display: inline;
+    padding: 0;
+}
+
+header li {
+    display: inline;
+    font-size: small;
+}
+
+h1 {
+    padding: 0;
+}
+
+div.message {
+    width: 90%;
+    padding: 0 1em 0 1em;
+}
+
+div.message:nth-child(even) {
+    background: #ddd;
+}
+
+div.message:nth-child(odd) {
+    background: #eee;
+}
+
+
+.message p {
+    font-family: courier, monospace;
+    /* white-space: pre; */
+    margin: 0;
+}
+
+.message ul {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.message li {
+    display: inline;
+    padding-right: 1em;
+}
+
+.meta {
+    font-size: x-small;
+}
+
+/*
+.message li:first-child {
+    float: right;
+    text-align: left;
+}
+*/
+
+.message cite a {
+    float: right;
+    padding-left: 1em;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
+    font-style: normal;
+    font-weight: bold;
+    font-size: x-small;
+    text-decoration: none;
+    color: #C8A8FF;  /* light purple */
+}
