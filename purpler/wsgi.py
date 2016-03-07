@@ -1,6 +1,7 @@
 
 import os
 import datetime
+import logging
 import sys
 
 import bleach
@@ -13,6 +14,9 @@ from six.moves.urllib.parse import parse_qs
 from purpler import store
 
 TEMPLATE_ENV = None
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig()
+logging.getLogger(__name__).setLevel(logging.DEBUG)
 
 
 class StoreSet(object):
@@ -42,9 +46,11 @@ def render(template_file, **kwargs):
 # need to make up my mind on nid or guid
 def get_via_nid(environ, start_response):
     nid = environ['wsgiorg.routing_args'][1]['nid']
-    store = environ['purpler.store']
+    storage = environ['purpler.store']
 
-    text = store.get(nid)
+    LOGGER.warn('asking for nid: %s', nid)
+    text = storage.get(nid)
+    LOGGER.warn('nid got text: %s', text)
 
     if text:
         # XXX this only works for irc contexts
@@ -67,7 +73,7 @@ def format_irc_lines(lines):
 
 
 def lines_by_datetime(environ, start_response):
-    store = environ['purpler.store']
+    storage = environ['purpler.store']
     context = environ['wsgiorg.routing_args'][1]['context']
     query = parse_qs(environ.get('QUERY_STRING', ''))
     timestamp = query.get('dated', [None])[0]
@@ -77,20 +83,20 @@ def lines_by_datetime(environ, start_response):
     else:
         timestamp = datetime.datetime.utcnow()
     # XXX The log does not contain messages from purplerbot itself.
-    lines = store.get_by_time_in_context('#%s' % context, timestamp)
+    lines = storage.get_by_time_in_context('#%s' % context, timestamp)
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
-        ('Cache-Control', 'no-cache, no-store, must-revalidate')])
+        ('Cache-Control', 'no-cache')])
     return render('irc.html', lines=format_irc_lines(lines), channel=context,
                   timestamp=timestamp)
 
 
 def logs_list(environ, start_response):
-    store = environ['purpler.store']
-    logs = store.get_logs()
+    storage = environ['purpler.store']
+    logs = storage.get_logs()
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
-        ('Cache-Control', 'no-cache, no-store, must-revalidate')])
+        ('Cache-Control', 'no-cache')])
     return render('logs.html', logs=logs)
 
 
