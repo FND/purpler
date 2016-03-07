@@ -100,11 +100,16 @@ def logs_list(environ, start_response):
     return render('logs.html', logs=logs)
 
 
+def get_root(environ,start_resonse):
+    raise httpexceptor.HTTP302('/logs')
+
+
 def load_app():
     app = Selector()
     app.add('/logs/{context:segment}', GET=lines_by_datetime)
-    app.add('/logs', GET=logs_list)
+    app.add('/logs[/]', GET=logs_list)
     app.add('/{nid:segment}', GET=get_via_nid)
+    app.add('/', GET=get_root)
     app = StoreSet(app)
     app = httpexceptor.HTTPExceptor(app)
 
