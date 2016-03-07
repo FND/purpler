@@ -77,16 +77,24 @@ class PurplerBot(bot.SingleServerIRCBot):
         nick = e.source.nick
         url = e.target
         lines = self.storage.get_by_time_in_context(url=url, count=10)
+        line = None
         for line in lines:
-            c.privmsg(nick, '%s: %s' % (line.when, line.content))
+            c.privmsg(nick, '%s: %s [n %s]' % (line.when, line.content, line.guid))
+        if line:
+            c.privmsg(nick, 'last message: http://p.anticdent.org/%s' % line.guid)
+        self.show_log(c, e)
 
     def show_mentions(self, c, e):
         nick = e.source.nick
         url = e.target
         lines = self.storage.get_by_time_in_context(url=url, count=10,
                 containing=nick)
+        line = None
         for line in lines:
-            c.privmsg(nick, '%s: %s' % (line.when, line.content))
+            c.privmsg(nick, '%s: %s [n %s]' % (line.when, line.content, line.guid))
+        if line:
+            c.privmsg(nick, 'last mention: http://p.anticdent.org/%s' % line.guid)
+        self.show_log(c, e)
 
     def show_log(self, c, e):
         nick = e.source.nick
@@ -98,6 +106,11 @@ class PurplerBot(bot.SingleServerIRCBot):
         nick = e.source.nick
         # XXX static url
         c.privmsg(nick, 'logs at http://p.anticdent.org/logs')
+
+    def on_action(self, c, e):
+        nick = e.source.nick
+        message = e.arguments[0]
+        self._log(e, message, nick, action=True)
 
     def on_pubmsg(self, c, e):
         # XXX at the moment we don't see messages that we send so
@@ -117,9 +130,15 @@ class PurplerBot(bot.SingleServerIRCBot):
             self.log.debug('saw guid %s', guid)
             outgoing_message = self.storage.get(guid)
             if outgoing_message:
-                c.privmsg(e.target, '%s: %s' % (outgoing_message.content, outgoing_message.guid))
+                c.privmsg(e.target, '%s: %s [n %s]' % (outgoing_message.when,
+                    outgoing_message.content, outgoing_message.guid))
+        self._log(e, message, nick)
+
+    def _log(self, e, message, nick, action=False):
         if e.target not in self.darkchannels:
             self.log.debug('Got message %s', message)
+            if action:
+                message = '/cdent %s' % message
             guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
             self.log.debug('Logged guid: %s', guid)
 
