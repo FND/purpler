@@ -4,10 +4,11 @@
         <link rel="stylesheet" href="/style.css" media="screen" />
     </head>
     <body>
-        <header>
+        <header class="bounder" id="top">
             <ul>
                 <li><a href="/logs">More Logs</a></li>
                 <li><a href="/logs/{{ channel }}">Latest</a></li>
+                <li><a href="#bottom">Bottom</a></li>
             </ul>
         </header>
         <h1>Log for {{ channel }} near {{ timestamp }}</h1>
@@ -21,6 +22,13 @@
         <p>{{ line.content.message }}</p>
     </div>
 {% endfor %}
+        <footer class="bounder" id="bottom">
+            <ul>
+                <li><a href="/logs">More Logs</a></li>
+                <li><a href="/logs/{{ channel }}">Latest</a></li>
+                <li><a href="#top">Top</a></li>
+            </ul>
+        </footer>
     </body>
 </html>
 

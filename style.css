@@ -17,12 +17,12 @@ body {
     hyphens: auto;
 }
 
-header ul {
+.bounder ul {
     display: inline;
     padding: 0;
 }
 
-header li {
+.bounder li {
     display: inline;
     font-size: small;
 }

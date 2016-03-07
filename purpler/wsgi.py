@@ -82,6 +82,7 @@ def lines_by_datetime(environ, start_response):
         timestamp = iso8601.parse_date(timestamp)
     else:
         timestamp = datetime.datetime.utcnow()
+        raise httpexceptor.HTTP302('/logs/%s?dated=%s#bottom' % (context, timestamp))
     # XXX The log does not contain messages from purplerbot itself.
     lines = storage.get_by_time_in_context('#%s' % context, timestamp)
 
