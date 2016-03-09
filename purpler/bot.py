@@ -13,6 +13,7 @@ import sys
 import time
 
 from irc import bot, connection
+from sqlalchemy import exc
 
 from purpler import store
 
@@ -138,9 +139,17 @@ class PurplerBot(bot.SingleServerIRCBot):
         if e.target not in self.darkchannels:
             self.log.debug('Got message %s', message)
             if action:
-                message = '/cdent %s' % message
-            guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
-            self.log.debug('Logged guid: %s', guid)
+                message = '/me %s' % message
+            count = 0
+            while count < 10:
+                try:
+                    guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
+                    self.log.debug('Logged guid: %s', guid)
+                    return
+                except exc.IntegrityError:
+                    count = count + 1
+            self.log.debug('guid conflict after ten tries')
+
 
 
 def run():
