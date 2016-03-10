@@ -85,11 +85,14 @@ def lines_by_datetime(environ, start_response):
         raise httpexceptor.HTTP302('/logs/%s?dated=%s#bottom' % (context, timestamp))
     # XXX The log does not contain messages from purplerbot itself.
     lines = storage.get_by_time_in_context('#%s' % context, timestamp)
+    earlier = timestamp - datetime.timedelta(minutes=60)
+    later = timestamp + datetime.timedelta(minutes=60)
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
         ('Cache-Control', 'no-cache')])
     return render('irc.html', lines=format_irc_lines(lines), channel=context,
-                  timestamp=timestamp)
+                  timestamp=timestamp, earlier=earlier.replace(tzinfo=None),
+                  later=later.replace(tzinfo=None))
 
 
 def logs_list(environ, start_response):
