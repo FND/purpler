@@ -120,18 +120,17 @@ class Store(object):
     def get_by_time_in_context(self, url, time=None, count=None,
                                containing=None, rlimit=1):
         one_hour = datetime.timedelta(minutes=60)
+        results = []
         if time:
             timeless = time - one_hour
             timemore = time + one_hour
-        else:
-            now = datetime.datetime.utcnow()
-            timeless = now - one_hour
-            timemore = now + one_hour
-        results = []
-        try:
             query = self.session.query(Text).filter(
                 Text.url == url, Text.when >= timeless,
                 Text.when <= timemore)
+        else:
+            query = self.session.query(Text).filter(
+                Text.url == url)
+        try:
             if containing:
                 # XXX hack to avoid finding nick at that start of text
                 intro = containing + ':%'
@@ -150,7 +149,7 @@ class Store(object):
         finally:
             self.session.close()
         # If we don't get any results go back in time up to 12 hours
-        if not results and rlimit < 12:
+        if time and not results and rlimit < 12:
             rlimit = rlimit +1
             return self.get_by_time_in_context(url, time=timeless, count=count,
                                                containing=containing, rlimit=rlimit)
