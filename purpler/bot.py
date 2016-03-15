@@ -157,7 +157,8 @@ def run():
     # TODO: see
     # http://stackoverflow.com/questions/27433316/how-to-get-argparse-to-read-arguments-from-a-file-with-an-option-rather-than-pre
     # for loading args from a file
-    parser = argparse.ArgumentParser(description='Run the irc bot')
+    parser = argparse.ArgumentParser(description='Run the irc bot',
+                                     fromfile_prefix_chars='@')
     parser.add_argument(
         '--db_url',
         dest='db_url',
