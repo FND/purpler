@@ -35,9 +35,16 @@ class StoreSet(object):
 
 def render(template_file, **kwargs):
     global TEMPLATE_ENV
+    template_path = os.environ.get('PURPLER_TEMPLATE_PATH')
     if not TEMPLATE_ENV:
-        TEMPLATE_ENV = jinja2.Environment(
-            loader=jinja2.FileSystemLoader('/home/cdent/src/purpler', encoding='utf-8'))  # FIXME
+        if template_path:
+            TEMPLATE_ENV = jinja2.Environment(loader=jinja2.ChoiceLoader([
+                jinja2.FileSystemLoader(template_path),
+                jinja2.PackageLoader('purpler', 'templates')]))
+        else:
+            TEMPLATE_ENV = jinja2.Environment(
+                    loader=jinja2.PackageLoader('purpler', 'templates'))
+
     template = TEMPLATE_ENV.get_template(template_file)
     # FIXME: would prefer generate here but encoding
     return [template.render(**kwargs).encode('utf-8')]

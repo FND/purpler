@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Available Logs{% endblock %}
+{% block body %}
+        <ul>
+{% for log in logs %}
+<li><a href="/logs/{{ log.url|replace("#", "") }}">{{ log.url }}</a></li>
+{% endfor %}
+        </ul>
+{% endblock %}

@@ -1,9 +1,6 @@
-<html>
-    <head>
-        <title>Log for {{ channel }} near {{ timestamp }}</title>
-        <link rel="stylesheet" href="/style.css" media="screen" />
-    </head>
-    <body>
+{% extends 'base.html' %}
+{% block title %}Log for {{ channel }} near {{ timestamp }}{% endblock %}
+{% block body %}
         <header class="bounder" id="top">
             <ul>
                 <li><a href="/logs">More Logs</a></li>
@@ -34,7 +31,6 @@
                 <li><a href="#top">Top</a></li>
             </ul>
         </footer>
-    </body>
 <script>
 (function() {
 
@@ -97,5 +93,4 @@ function onClick(e) {
 }());
 
 </script>
-</html>
-
+{% endblock %}
