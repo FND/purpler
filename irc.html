@@ -17,7 +17,7 @@
         <h1>Log for {{ channel }} near {{ timestamp }}</h1>
 {% for line in lines %}
     <div class="message" id="{{ line.guid }}">
-        <cite><a href="/{{ line.guid}}">{{ line.guid }}</a></cite>
+        <cite class="nidclick"><a class="nid" href="/{{ line.guid}}">{{ line.guid }}</a> &#128203;</cite>
         <ul class="meta">
             <li>{{ line.when }}</li>
             <li>{{ line.content.nick }}</li>
@@ -35,5 +35,67 @@
             </ul>
         </footer>
     </body>
+<script>
+(function() {
+
+"use strict";
+
+var HIGHLIGHT_CLASS = "selected";
+
+highlight();
+window.addEventListener("hashchange", highlight, false);
+
+function highlight() {
+    var fragID = document.location.toString().split("#")[1];
+    if(fragID) {
+        var nodes = document.getElementsByClassName(HIGHLIGHT_CLASS);
+        [].forEach.call(nodes, function(node) {
+            node.classList.remove(HIGHLIGHT_CLASS);
+        });
+
+        var node = document.getElementById(fragID);
+        node.classList.add(HIGHLIGHT_CLASS);
+    }
+}
+
+}());
+
+
+(function() {
+
+"use strict";
+
+var containers = document.getElementsByClassName('nidclick');
+[].forEach.call(containers, function(container) {
+    container.addEventListener("click", onClick, false);
+});
+
+function selectText(element) {
+    var doc = document,
+        range, selection;
+    if (doc.body.createTextRange) {
+        range = document.body.createTextRange();
+        range.moveToElementText(element);
+        range.select();
+        return range;
+    } else if (window.getSelection) {
+        selection = window.getSelection();
+        range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return selection;
+    }
+}
+
+function onClick(e) {
+    var range;
+    e.preventDefault();
+    range = selectText(e.target.getElementsByClassName('nid')[0]);
+    document.execCommand("copy");
+}
+}());
+
+</script>
 </html>
 

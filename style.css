@@ -44,6 +44,10 @@ div.message:nth-child(odd) {
     background: #eee;
 }
 
+.selected {
+    background: rgb(248, 238, 199) !important;
+}
+
 
 .message p {
     font-family: courier, monospace;
@@ -73,13 +77,16 @@ div.message:nth-child(odd) {
 }
 */
 
-.message cite a {
+.message cite {
     float: right;
     padding-left: 1em;
     font-family: Verdana, Trebuchet, Arial, Helvetica;
     font-style: normal;
     font-weight: bold;
     font-size: x-small;
+}
+
+.message cite a {
     text-decoration: none;
     color: #C8A8FF;  /* light purple */
 }
