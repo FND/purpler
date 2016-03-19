@@ -24,7 +24,7 @@ COMMANDS = {
     'hist': 'show_history',
     'spy':  'show_mentions',
 }
-COMMANDER = re.compile('^p!(%s)$' % '|'.join(COMMANDS.keys()))
+COMMANDER = re.compile('^p!(%s)(\s\d+)?$' % '|'.join(COMMANDS.keys()))
 TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
@@ -67,17 +67,20 @@ class PurplerBot(bot.SingleServerIRCBot):
             self.log.info('Joined channel %s' % channel)
             time.sleep(0.5)
 
-    def show_help(self, c, e):
+    def show_help(self, c, e, arg=None):
         nick = e.source.nick
         c.privmsg(nick, 'p!log to get the URL of the log of the current channel')
         c.privmsg(nick, 'p!logs to get the URL of all available logs')
         c.privmsg(nick, 'p!hist up to last 10 messages in the recent past')
         c.privmsg(nick, 'p!spy last 10 mentions (fuzzy) in the recent past')
 
-    def show_history(self, c, e):
+    def show_history(self, c, e, arg=None):
         nick = e.source.nick
         url = e.target
-        lines = self.storage.get_by_time_in_context(url=url, count=10)
+        count = 10
+        if arg:
+            count = arg
+        lines = self.storage.get_by_time_in_context(url=url, count=count)
         line = None
         for line in lines:
             c.privmsg(nick, '%s: %s [n %s]' % (line.when, line.content, line.guid))
@@ -85,10 +88,13 @@ class PurplerBot(bot.SingleServerIRCBot):
             c.privmsg(nick, 'last message: http://p.anticdent.org/%s' % line.guid)
         self.show_log(c, e)
 
-    def show_mentions(self, c, e):
+    def show_mentions(self, c, e, arg=None):
         nick = e.source.nick
         url = e.target
-        lines = self.storage.get_by_time_in_context(url=url, count=10,
+        count = 10
+        if arg:
+            count = arg
+        lines = self.storage.get_by_time_in_context(url=url, count=count,
                 containing=nick)
         line = None
         for line in lines:
@@ -97,13 +103,13 @@ class PurplerBot(bot.SingleServerIRCBot):
             c.privmsg(nick, 'last mention: http://p.anticdent.org/%s' % line.guid)
         self.show_log(c, e)
 
-    def show_log(self, c, e):
+    def show_log(self, c, e, arg=None):
         nick = e.source.nick
         channel = e.target.replace('#', '')
         # XXX static url
         c.privmsg(nick, 'log at http://p.anticdent.org/logs/%s' % channel)
 
-    def show_logs(self, c, e):
+    def show_logs(self, c, e, arg=None):
         nick = e.source.nick
         # XXX static url
         c.privmsg(nick, 'logs at http://p.anticdent.org/logs')
@@ -122,8 +128,11 @@ class PurplerBot(bot.SingleServerIRCBot):
 
         command = COMMANDER.search(message)
         if command:
-            command = command.group(1)
-            return getattr(self, COMMANDS[command])(c, e)
+            func = command.group(1)
+            arg = command.group(2)
+            if arg:
+                arg = int(arg)
+            return getattr(self, COMMANDS[func])(c, e, arg)
 
         result = TRANSCLUDER.search(message)
         if result:
