@@ -1,18 +1,32 @@
-# A simple irc bot that connects to a channel, logs what people say
-# and parses for [t <nid>] to send that back to the channel.
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
+"""A simple logging and transcluding irc bot
 
-# Based on
-# https://github.com/openstack-infra/gerritbot/blob/master/gerritbot/bot.py
-# https://github.com/jaraco/irc/blob/master/scripts/testbot.py
+Connects to a channel, logs what people say and parses for
+[t <nid>] to send that back to the channel.
+
+Based on
+https://github.com/openstack-infra/gerritbot/blob/master/gerritbot/bot.py
+https://github.com/jaraco/irc/blob/master/scripts/testbot.py
+"""
 
 import argparse
 import logging
 import re
 import ssl
-import sys
 import time
 
-from irc import bot, connection
+from irc import bot
+from irc import connection
 from sqlalchemy import exc
 
 from purpler import store
@@ -22,12 +36,13 @@ COMMANDS = {
     'logs': 'show_logs',
     'help': 'show_help',
     'hist': 'show_history',
-    'spy':  'show_mentions',
+    'spy': 'show_mentions',
 }
 COMMANDER = re.compile('^p!(%s)(\s\d+)?$' % '|'.join(COMMANDS.keys()))
 TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 class PurplerBot(bot.SingleServerIRCBot):
     def __init__(self, db_url, server, port, channels, nickname,
@@ -39,7 +54,7 @@ class PurplerBot(bot.SingleServerIRCBot):
                                              connect_factory=factory)
         else:
             super(PurplerBot, self).__init__([(server, port, server_password)],
-                                            nickname, nickname)
+                                             nickname, nickname)
 
         self.channel_list = channels
         self.darkchannels = darkchannels
@@ -53,7 +68,8 @@ class PurplerBot(bot.SingleServerIRCBot):
         c.nick(c.get_nickname() + "_")
         c.privmsg("nickserv", "identify %s " % self.password)
         c.privmsg("nickserv", "ghost %s %s" % (self.nickname, self.password))
-        c.privmsg("nickserv", "release %s %s" % (self.nickname, self.password))
+        c.privmsg("nickserv", "release %s %s"
+                  % (self.nickname, self.password))
         time.sleep(1)
         c.nick(self.nickname)
         self.log.info('Nick previously in use, recovered.')
@@ -69,7 +85,8 @@ class PurplerBot(bot.SingleServerIRCBot):
 
     def show_help(self, c, e, arg=None):
         nick = e.source.nick
-        c.privmsg(nick, 'p!log to get the URL of the log of the current channel')
+        c.privmsg(nick,
+                  'p!log to get the URL of the log of the current channel')
         c.privmsg(nick, 'p!logs to get the URL of all available logs')
         c.privmsg(nick, 'p!hist up to last 10 messages in the recent past')
         c.privmsg(nick, 'p!spy last 10 mentions (fuzzy) in the recent past')
@@ -83,9 +100,11 @@ class PurplerBot(bot.SingleServerIRCBot):
         lines = self.storage.get_by_time_in_context(url=url, count=count)
         line = None
         for line in lines:
-            c.privmsg(nick, '%s: %s [n %s]' % (line.when, line.content, line.guid))
+            c.privmsg(nick, '%s: %s [n %s]'
+                      % (line.when, line.content, line.guid))
         if line:
-            c.privmsg(nick, 'last message: http://p.anticdent.org/%s' % line.guid)
+            c.privmsg(nick, 'last message: http://p.anticdent.org/%s'
+                      % line.guid)
         self.show_log(c, e)
 
     def show_mentions(self, c, e, arg=None):
@@ -95,12 +114,14 @@ class PurplerBot(bot.SingleServerIRCBot):
         if arg:
             count = arg
         lines = self.storage.get_by_time_in_context(url=url, count=count,
-                containing=nick)
+                                                    containing=nick)
         line = None
         for line in lines:
-            c.privmsg(nick, '%s: %s [n %s]' % (line.when, line.content, line.guid))
+            c.privmsg(nick, '%s: %s [n %s]' %
+                      (line.when, line.content, line.guid))
         if line:
-            c.privmsg(nick, 'last mention: http://p.anticdent.org/%s' % line.guid)
+            c.privmsg(nick, 'last mention: http://p.anticdent.org/%s'
+                      % line.guid)
         self.show_log(c, e)
 
     def show_log(self, c, e, arg=None):
@@ -140,8 +161,9 @@ class PurplerBot(bot.SingleServerIRCBot):
             self.log.debug('saw guid %s', guid)
             outgoing_message = self.storage.get(guid)
             if outgoing_message:
-                c.privmsg(e.target, '%s: %s [n %s]' % (outgoing_message.when,
-                    outgoing_message.content, outgoing_message.guid))
+                c.privmsg(e.target, '%s: %s [n %s]' % (
+                    outgoing_message.when, outgoing_message.content,
+                    outgoing_message.guid))
         self._log(e, message, nick)
 
     def _log(self, e, message, nick, action=False):
@@ -152,7 +174,8 @@ class PurplerBot(bot.SingleServerIRCBot):
             count = 0
             while count < 10:
                 try:
-                    guid = self.storage.put(url=e.target, content='%s: %s' % (nick, message))
+                    guid = self.storage.put(
+                        url=e.target, content='%s: %s' % (nick, message))
                     self.log.debug('Logged guid: %s', guid)
                     return
                 except exc.IntegrityError:
@@ -160,12 +183,7 @@ class PurplerBot(bot.SingleServerIRCBot):
             self.log.debug('guid conflict after ten tries')
 
 
-
 def run():
-
-    # TODO: see
-    # http://stackoverflow.com/questions/27433316/how-to-get-argparse-to-read-arguments-from-a-file-with-an-option-rather-than-pre
-    # for loading args from a file
     parser = argparse.ArgumentParser(description='Run the irc bot',
                                      fromfile_prefix_chars='@')
     parser.add_argument(
@@ -175,7 +193,7 @@ def run():
         help='A db_url that describes where stuff will be stored'
     )
     parser.add_argument(
-        '--irc_server',
+        '--irc-server',
         dest='server',
         default='chat.freenode.net:6697',
         help='IRC host:port'
@@ -197,20 +215,21 @@ def run():
         nargs='?', default=None,
         dest='channels',
         action='append',
-        help='With each use add a channel on which the bot should listen. Use # in channel name.'
+        help='With each use add a channel on which the bot should listen. '
+             'Use # in channel name.'
     )
     parser.add_argument(
         '-n', '--no-log',
-        nargs='?', default=None,
+        nargs='?', default=[],
         dest='darkchannels',
         action='append',
-        help='Channels in the channel list that should not log. Use # in channel name.'
+        help='Channels in the channel list that should not log. '
+             'Use # in channel name.'
     )
     args = parser.parse_args()
 
     server, port = args.server.split(':', 1)
     port = int(port)
-
 
     bot = PurplerBot(args.db_url, server, port, args.channels,
                      args.nickname, args.password, args.darkchannels)

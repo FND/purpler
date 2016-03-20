@@ -1,3 +1,14 @@
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
 """
 Store bits of text and their guids and timestamps.
 """
@@ -5,34 +16,34 @@ Store bits of text and their guids and timestamps.
 import datetime
 import logging
 
-from sqlalchemy import event
 from sqlalchemy.engine import create_engine
+from sqlalchemy import event
 from sqlalchemy.exc import DisconnectionError
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext import declarative
+from sqlalchemy import orm
+from sqlalchemy.schema import Column
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.sql.functions import now
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.schema import Table, Column, UniqueConstraint
 from sqlalchemy.types import String, UnicodeText, DateTime
 
 from purpler import base62
 
-Base = declarative_base()
-Session = scoped_session(sessionmaker())
+Base = declarative.declarative_base()
+Session = orm.scoped_session(orm.sessionmaker())
 
 
 LOGGER = logging.getLogger(__name__)
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)
+# logging.basicConfig()
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)
 
 ENGINE = None
 MAPPED = False
 
 
 def on_checkout(dbapi_con, con_record, con_proxy):
-    """
-    Ensures that MySQL connections checked out of the pool are alive.
+    """Ensure MySQL connections checked out of the pool are alive.
+
     Borrowed from:
     http://groups.google.com/group/sqlalchemy/msg/a4ce563d802c929f
     """
@@ -41,7 +52,7 @@ def on_checkout(dbapi_con, con_record, con_proxy):
             dbapi_con.ping(False)
         except TypeError:
             dbapi_con.ping()
-    except dbapi_con.OperationalError, ex:
+    except dbapi_con.OperationalError as ex:
         if ex.args[0] in (2006, 2013, 2014, 2045, 2055):
             LOGGER.debug('got mysql server has gone away: %s', ex)
             # caught by pool, which will retry with a new connection
@@ -87,11 +98,10 @@ class Store(object):
             Base.metadata.create_all(engine)
             MAPPED = True
 
-
     def get(self, guid):
         try:
             text = self.session.query(Text).filter_by(guid=guid).first()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:
@@ -112,7 +122,7 @@ class Store(object):
                     yield line
             else:
                 yield
-        except:
+        except Exception:
             self.session.rollback()
         finally:
             self.session.close()
@@ -143,31 +153,32 @@ class Store(object):
             else:
                 query = query.order_by(Text.when)
             results = query.all()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:
             self.session.close()
         # If we don't get any results go back in time up to 12 hours
         if time and not results and rlimit < 12:
-            rlimit = rlimit +1
-            return self.get_by_time_in_context(url, time=timeless, count=count,
-                                               containing=containing, rlimit=rlimit)
+            rlimit = rlimit + 1
+            return self.get_by_time_in_context(url, time=timeless,
+                                               count=count,
+                                               containing=containing,
+                                               rlimit=rlimit)
         return results
-
 
     def get_logs(self):
         # XXX irc specific (again)
         try:
-            query = self.session.query(Text).group_by(Text.url).order_by(Text.url)
+            query = (self.session.query(Text).group_by(Text.url)
+                     .order_by(Text.url))
             for line in query.all():
                 yield line
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:
             self.session.close()
-
 
     def put(self, guid=None, url=None, content=None):
         # If something with the provided guid already exists, we'll
@@ -180,7 +191,7 @@ class Store(object):
             text = Text(guid=guid, url=url, content=content)
             self.session.add(text)
             self.session.commit()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:

@@ -1,8 +1,18 @@
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
 
-import os
 import datetime
 import logging
-import sys
+import os
 
 import bleach
 import httpexceptor
@@ -65,10 +75,11 @@ def get_via_nid(environ, start_response):
             context = text.url.replace('#', '')
             # XXX: If accept headers are for something other than html we
             # should not redirect.
-            raise httpexceptor.HTTP302('/logs/%s?dated=%s#%s' % (context, text.when, text.guid))
+            raise httpexceptor.HTTP302('/logs/%s?dated=%s#%s'
+                                       % (context, text.when, text.guid))
     else:
         raise httpexceptor.HTTP404('we got nothing for you mate')
-    
+
 
 def format_irc_lines(lines):
     for line in lines:
@@ -89,14 +100,15 @@ def lines_by_datetime(environ, start_response):
         timestamp = iso8601.parse_date(timestamp)
     else:
         timestamp = datetime.datetime.utcnow()
-        raise httpexceptor.HTTP302('/logs/%s?dated=%s#bottom' % (context, timestamp))
+        raise httpexceptor.HTTP302('/logs/%s?dated=%s#bottom'
+                                   % (context, timestamp))
     # XXX The log does not contain messages from purplerbot itself.
     lines = storage.get_by_time_in_context('#%s' % context, timestamp)
     earlier = timestamp - datetime.timedelta(minutes=60)
     later = timestamp + datetime.timedelta(minutes=60)
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
-        ('Cache-Control', 'no-cache')])
+                              ('Cache-Control', 'no-cache')])
     return render('irc.html', lines=format_irc_lines(lines), channel=context,
                   timestamp=timestamp, earlier=earlier.replace(tzinfo=None),
                   later=later.replace(tzinfo=None))
@@ -107,11 +119,11 @@ def logs_list(environ, start_response):
     logs = storage.get_logs()
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
-        ('Cache-Control', 'no-cache')])
+                              ('Cache-Control', 'no-cache')])
     return render('logs.html', logs=logs)
 
 
-def get_root(environ,start_resonse):
+def get_root(environ, start_resonse):
     raise httpexceptor.HTTP302('/logs')
 
 

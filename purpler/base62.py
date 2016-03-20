@@ -1,3 +1,15 @@
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied. See the License for the specific language governing
+# permissions and limitations under the License.
+
 # Turn a number into a base62 string.
 # From: http://stackoverflow.com/a/1119769
 
@@ -6,7 +18,7 @@ import uuid
 
 
 ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-# TODO: Make this per installation.
+# TODO(cdent): Make this per installation.
 NAMESPACE = uuid.UUID('0B4CCF27-3676-4DF4-A1D6-352919D4D6C7')
 
 
