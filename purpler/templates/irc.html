@@ -86,7 +86,6 @@ function selectText(element) {
 
 function onClick(e) {
     var range;
-    e.preventDefault();
     range = selectText(e.target.getElementsByClassName('nid')[0]);
     document.execCommand("copy");
 }
