@@ -12,7 +12,7 @@ clean:
 	rm -r purpler.egg-info || true
 
 tagv:
-	git tag -s \
+	git tag \
 		-m `python -c 'import purpler; print purpler.__version__'` \
 		`python -c 'import purpler; print purpler.__version__'`
 	git push origin master --tags
