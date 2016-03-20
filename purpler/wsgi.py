@@ -22,8 +22,8 @@ logging.getLogger(__name__).setLevel(logging.DEBUG)
 class StoreSet(object):
 
     def __init__(self, application=None):
-        # XXX Need real config, doing this for now for expediency.
-        with open('/home/cdent/src/purpler/db_url') as dbfile:
+        # Get purpler.db_url out of the CWD of the wsgi app
+        with open('purpler.db_url') as dbfile:
             self.dbname = dbfile.read().strip()
         self.application = application
 

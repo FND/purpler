@@ -169,7 +169,7 @@ def run():
     parser = argparse.ArgumentParser(description='Run the irc bot',
                                      fromfile_prefix_chars='@')
     parser.add_argument(
-        '--db_url',
+        '--db-url',
         dest='db_url',
         default='sqlite:////tmp/purpler',
         help='A db_url that describes where stuff will be stored'
