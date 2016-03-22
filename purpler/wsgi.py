@@ -116,7 +116,6 @@ def lines_by_datetime(environ, start_response):
         earlier = timestamp - datetime.timedelta(minutes=60)
         later = timestamp + datetime.timedelta(minutes=60)
 
-
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
                               ('Cache-Control', 'no-cache')])
     return render('irc.html', lines=format_irc_lines(lines), channel=context,
