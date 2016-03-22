@@ -155,17 +155,18 @@ class PurplerBot(bot.SingleServerIRCBot):
                 arg = int(arg)
             return getattr(self, COMMANDS[func])(c, e, arg)
 
-        result = TRANSCLUDER.search(message)
-        if result:
-            guid = result.group(1)
-            self.log.debug('saw guid %s', guid)
-            outgoing_message = self.storage.get(guid)
-            if outgoing_message:
-                nick, the_message = outgoing_message.content.split(':', 1)
-                c.privmsg(e.target, '<%s> %s [%s] [n %s]' % (
-                    nick.strip(), the_message.strip(),
-                    outgoing_message.when,
-                    outgoing_message.guid))
+        results = TRANSCLUDER.finditer(message)
+        if results:
+            for result in results:
+                guid = result.group(1)
+                self.log.debug('saw guid %s', guid)
+                outgoing_message = self.storage.get(guid)
+                if outgoing_message:
+                    nick, the_message = outgoing_message.content.split(':', 1)
+                    c.privmsg(e.target, '<%s> %s [%s] [n %s]' % (
+                        nick.strip(), the_message.strip(),
+                        outgoing_message.when,
+                        outgoing_message.guid))
         self._log(e, message, nick)
 
     def _log(self, e, message, nick, action=False):
