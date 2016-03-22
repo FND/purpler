@@ -104,8 +104,18 @@ def lines_by_datetime(environ, start_response):
                                    % (context, timestamp))
     # XXX The log does not contain messages from purplerbot itself.
     lines = storage.get_by_time_in_context('#%s' % context, timestamp)
-    earlier = timestamp - datetime.timedelta(minutes=60)
-    later = timestamp + datetime.timedelta(minutes=60)
+    if lines:
+        ten_lines_ago_time = storage.get_ten_behind_date(
+                '#%s' % context, lines[0].when)
+        if ten_lines_ago_time:
+            earlier = ten_lines_ago_time
+        else:
+            earlier = timestamp - datetime.timedelta(minutes=60)
+        later = lines[-1].when
+    else:
+        earlier = timestamp - datetime.timedelta(minutes=60)
+        later = timestamp + datetime.timedelta(minutes=60)
+
 
     start_response('200 OK', [('content-type', 'text/html; charset=utf-8'),
                               ('Cache-Control', 'no-cache')])

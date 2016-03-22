@@ -127,6 +127,20 @@ class Store(object):
         finally:
             self.session.close()
 
+    def get_ten_behind_date(self, url, time):
+        try:
+            query = (self.session.query(Text).filter(
+                     Text.url == url,
+                     Text.when <= time)
+                     .order_by(Text.when.desc())
+                     .limit(10))
+            result = query.all()
+        except Exception:
+            self.session.rollback()
+        finally:
+            self.session.close()
+        return result[-1].when
+
     def get_by_time_in_context(self, url, time=None, count=None,
                                containing=None, rlimit=1):
         one_hour = datetime.timedelta(minutes=60)
