@@ -236,4 +236,8 @@ def run():
 
     bot = PurplerBot(args.db_url, server, port, args.channels,
                      args.nickname, args.password, args.darkchannels)
-    bot.start()
+    while True:
+        try:
+            bot.start()
+        except UnicodeDecodeError:
+            pass

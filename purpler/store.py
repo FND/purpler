@@ -68,8 +68,10 @@ class Text(Base):
         'mysql_charset': 'utf8mb4',
     }
 
-    guid = Column(String(12), primary_key=True, nullable=False)
-    url = Column(String(255), nullable=True, index=True)
+    guid = Column(String(12), primary_key=True, nullable=False,
+                  collation='latin1_bin')
+    url = Column(String(255), nullable=True, index=True,
+                 collation='latin1_bin')
     content = Column(UnicodeText, nullable=True)
     when = Column(DateTime(timezone=True), index=True,
                   server_default=now())
