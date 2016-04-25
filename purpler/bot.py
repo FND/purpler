@@ -38,7 +38,7 @@ COMMANDS = {
     'hist': 'show_history',
     'spy': 'show_mentions',
 }
-COMMANDER = re.compile('^p!(%s)(\s\d+)?$' % '|'.join(COMMANDS.keys()))
+COMMANDER = re.compile('^p!(%s)(.*)?$' % '|'.join(COMMANDS.keys()))
 TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +46,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class PurplerBot(bot.SingleServerIRCBot):
     def __init__(self, db_url, server, port, channels, nickname,
-                 password, darkchannels, server_password=None):
+                 password, darkchannels, server_password=None, web_url=None):
         if port == 6697:
             factory = connection.Factory(wrapper=ssl.wrap_socket)
             super(PurplerBot, self).__init__([(server, port, server_password)],
@@ -60,6 +60,7 @@ class PurplerBot(bot.SingleServerIRCBot):
         self.darkchannels = darkchannels
         self.nickname = nickname
         self.password = password
+        self.web_url = web_url
         self.log = logging.getLogger(__name__)
         self.storage = store.Store(db_url)
 
@@ -90,55 +91,94 @@ class PurplerBot(bot.SingleServerIRCBot):
         c.privmsg(nick, 'p!logs to get the URL of all available logs')
         c.privmsg(nick, 'p!hist up to last 10 messages in the recent past')
         c.privmsg(nick, 'p!spy last 10 mentions (fuzzy) in the recent past')
+        c.privmsg(nick, 'The bot listens in channels and on private messages')
+
+    def parse_arg(self, arg, url):
+        self.log.debug('saw arg "%s" and url "%s"', arg, url)
+        count = 10
+        arg = arg.strip()
+        args = arg.split(None, 1)
+        self.log.debug('args is %s', args)
+        for arg in args:
+            if arg.isdigit():
+                count = arg
+            else:
+                url = arg
+                if not url.startswith('#'):
+                    url = '#%s' % url
+        self.log.debug('set url and count: %s, %s', url, count)
+        return url, count
 
     def show_history(self, c, e, arg=None):
         nick = e.source.nick
         url = e.target
         count = 10
         if arg:
-            count = arg
+            url, count = self.parse_arg(arg, url)
         lines = self.storage.get_by_time_in_context(url=url, count=count)
         line = None
         for line in lines:
             c.privmsg(nick, '%s: %s [n %s]'
                       % (line.when, line.content, line.guid))
-        if line:
-            c.privmsg(nick, 'last message: http://p.anticdent.org/%s'
-                      % line.guid)
-        self.show_log(c, e)
+        if line and self.web_url:
+            c.privmsg(nick, 'last message: %s/%s'
+                      % (self.web_url, line.guid))
+        self.show_log(c, e, arg)
 
     def show_mentions(self, c, e, arg=None):
         nick = e.source.nick
         url = e.target
         count = 10
         if arg:
-            count = arg
+            url, count = self.parse_arg(arg, url)
+        self.log.debug('looking for url, count, nick: %s, %s, %s', url, count, nick)
         lines = self.storage.get_by_time_in_context(url=url, count=count,
                                                     containing=nick)
         line = None
         for line in lines:
             c.privmsg(nick, '%s: %s [n %s]' %
                       (line.when, line.content, line.guid))
-        if line:
-            c.privmsg(nick, 'last mention: http://p.anticdent.org/%s'
-                      % line.guid)
-        self.show_log(c, e)
+        if line and self.web_url:
+            c.privmsg(nick, 'last mention: %s/%s'
+                      % (self.web_url, line.guid))
+        self.show_log(c, e, arg)
 
     def show_log(self, c, e, arg=None):
         nick = e.source.nick
         channel = e.target.replace('#', '')
-        # XXX static url
-        c.privmsg(nick, 'log at http://p.anticdent.org/logs/%s' % channel)
+        if arg:
+            channel, count = self.parse_arg(arg, channel)
+            channel = channel.replace('#', '')
+        if self.web_url:
+            c.privmsg(nick, 'log at %s/logs/%s' % (self.web_url, channel))
+        else:
+            c.privmsg(nick, 'There is no web log')
 
     def show_logs(self, c, e, arg=None):
         nick = e.source.nick
         # XXX static url
-        c.privmsg(nick, 'logs at http://p.anticdent.org/logs')
+        if self.web_url:
+            c.privmsg(nick, 'logs at %s/logs' % self.web_url)
+        else:
+            c.privmsg(nick, 'There is no web log')
 
     def on_action(self, c, e):
         nick = e.source.nick
         message = e.arguments[0]
         self._log(e, message, nick, action=True)
+
+    def _handle_command(self, c, e):
+        nick = e.source.nick
+        message = e.arguments[0]
+
+        command = COMMANDER.search(message)
+        if command:
+            func = command.group(1)
+            arg = command.group(2)
+            return getattr(self, COMMANDS[func])(c, e, arg)
+
+    def on_privmsg(self, c, e):
+        self._handle_command(c, e)
 
     def on_pubmsg(self, c, e):
         # XXX at the moment we don't see messages that we send so
@@ -147,13 +187,7 @@ class PurplerBot(bot.SingleServerIRCBot):
         nick = e.source.nick
         message = e.arguments[0]
 
-        command = COMMANDER.search(message)
-        if command:
-            func = command.group(1)
-            arg = command.group(2)
-            if arg:
-                arg = int(arg)
-            return getattr(self, COMMANDS[func])(c, e, arg)
+        self._handle_command(c, e)
 
         results = TRANSCLUDER.finditer(message)
         if results:
@@ -229,13 +263,20 @@ def run():
         help='Channels in the channel list that should not log. '
              'Use # in channel name.'
     )
+    parser.add_argument(
+        '-w', '--web-url',
+        dest='web_url',
+        default=None,
+        help='URL of the web interface'
+    )
     args = parser.parse_args()
 
     server, port = args.server.split(':', 1)
     port = int(port)
 
     bot = PurplerBot(args.db_url, server, port, args.channels,
-                     args.nickname, args.password, args.darkchannels)
+                     args.nickname, args.password, args.darkchannels,
+                     web_url=args.web_url)
     while True:
         try:
             bot.start()

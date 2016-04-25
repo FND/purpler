@@ -68,10 +68,8 @@ class Text(Base):
         'mysql_charset': 'utf8mb4',
     }
 
-    guid = Column(String(12, collation='latin1_bin'), primary_key=True,
-                         nullable=False)
-    url = Column(String(255, collation='latin1_bin'), nullable=True,
-                 index=True)
+    guid = Column(String(12), primary_key=True, nullable=False)
+    url = Column(String(255), nullable=True, index=True)
     content = Column(UnicodeText, nullable=True)
     when = Column(DateTime(timezone=True), index=True,
                   server_default=now())
@@ -97,8 +95,20 @@ class Store(object):
         self.session = Session()
 
         if not MAPPED:
+            if 'mysql' in dburi:
+                self._map_tables(Base.metadata.sorted_tables)
             Base.metadata.create_all(engine)
             MAPPED = True
+
+    @staticmethod
+    def _map_tables(tables):
+        for table in tables:
+            if table.name == 'text':
+                for column in table.columns:
+                    if column.name == 'guid':
+                        column.type = String(12, collation='latin1_bin')
+                    if column.name == 'url':
+                        column.type = String(255, collation='latin1_bin')
 
     def get(self, guid):
         try:
