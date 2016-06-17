@@ -95,6 +95,8 @@ def lines_by_datetime(environ, start_response):
     context = environ['wsgiorg.routing_args'][1]['context']
     query = parse_qs(environ.get('QUERY_STRING', ''))
     timestamp = query.get('dated', [None])[0]
+    if not storage.check_existence('#%s' % context):
+        raise httpexceptor.HTTP404('no logs')
     # XXX currently IRC only
     if timestamp:
         timestamp = iso8601.parse_date(timestamp)

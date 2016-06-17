@@ -139,6 +139,18 @@ class Store(object):
         finally:
             self.session.close()
 
+    def check_existence(self, url):
+        result = None
+        try:
+            query = self.session.query(Text).filter(
+                Text.url == url)
+            result = query.first()
+        except Exception:
+            self.session.rollback()
+        finally:
+            self.session.close()
+        return result
+
     def get_ten_behind_date(self, url, time):
         try:
             query = (self.session.query(Text).filter(
