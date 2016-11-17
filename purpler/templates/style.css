@@ -3,6 +3,7 @@ body {
     max-width: 40em;
     text-rendering: optimizeLegibility;
     hyphens: auto;
+    margin: 0 auto;
 }
 
 .bounder ul {
@@ -45,6 +46,7 @@ h1 {
 
 .h-entry {
     margin: 0.5em;
+    clear: both;
 }
 
 .meta {
