@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Log for {{ channel }} near {{ timestamp }}{% endblock %}
+{% block title %}{{ channel }} around {{ timestamp.strftime('%R %F') }}{% endblock %}
 {% block body %}
         <header class="bounder" id="top">
             <ul>
@@ -11,26 +11,30 @@
                 <li><a href="https://anticdent.org/purple-irc-bot.html">About</a></li>
             </ul>
         </header>
-        <h1>Log for {{ channel }} near {{ timestamp }}</h1>
+    <h1>{{ channel }} around {{ timestamp.strftime('%R %F') }}</h1>
+    <ol class="messages">
 {% for line in lines %}
-    <div class="message" id="{{ line.guid }}">
+    <li class="h-entry" id="{{ line.guid }}">
         <cite class="nidclick"><a class="nid" href="/{{ line.guid}}">{{ line.guid }}</a> &#128203;</cite>
-        <ul class="meta">
-            <li>{{ line.when }}</li>
-            <li>{{ line.content.nick }}</li>
-        </ul>
-        <p>{{ line.content.message }}</p>
-    </div>
+        <div class="meta">
+            <time class="dt-published" title="{{ line.when }}" datetime="{{ line.when }}">
+            {{ line.when.strftime('%T') }}
+            </time>
+            <span class="p-author">{{ line.content.nick }}</span>
+        </div>
+        <p class="e-content">{{ line.content.message }}</p>
+    </li>
 {% endfor %}
-        <footer class="bounder" id="bottom">
-            <ul>
-                <li><a href="/logs">More Logs</a></li>
-                <li><a href="/logs/{{ channel }}?dated={{ earlier }}">Earlier</a></li>
-                <li><a href="/logs/{{ channel }}?dated={{ later }}">Later</a></li>
-                <li><a href="/logs/{{ channel }}">Latest</a></li>
-                <li><a href="#top">Top</a></li>
-            </ul>
-        </footer>
+    </ol>
+    <footer class="bounder" id="bottom">
+        <ul>
+            <li><a href="/logs">More Logs</a></li>
+            <li><a href="/logs/{{ channel }}?dated={{ earlier }}">Earlier</a></li>
+            <li><a href="/logs/{{ channel }}?dated={{ later }}">Later</a></li>
+            <li><a href="/logs/{{ channel }}">Latest</a></li>
+            <li><a href="#top">Top</a></li>
+        </ul>
+    </footer>
 <script>
 (function() {
 
