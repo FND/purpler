@@ -196,9 +196,9 @@ class PurplerBot(bot.SingleServerIRCBot):
                 self.log.debug('saw guid %s', guid)
                 outgoing_message = self.storage.get(guid)
                 if outgoing_message:
-                    nick, the_message = outgoing_message.content.split(':', 1)
+                    out_nick, the_message = outgoing_message.content.split(':', 1)
                     c.privmsg(e.target, '<%s> %s [%s] [n %s]' % (
-                        nick.strip(), the_message.strip(),
+                        out_nick.strip(), the_message.strip(),
                         outgoing_message.when,
                         outgoing_message.guid))
         self._log(e, message, nick)
