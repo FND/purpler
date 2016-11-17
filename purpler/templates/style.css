@@ -3,7 +3,6 @@ body {
     max-width: 40em;
     text-rendering: optimizeLegibility;
     hyphens: auto;
-    margin: 0 auto;
 }
 
 .bounder ul {
