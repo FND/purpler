@@ -24,7 +24,8 @@ from sqlalchemy import orm
 from sqlalchemy.schema import Column
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.sql.functions import now
-from sqlalchemy.types import String, UnicodeText, DateTime
+from sqlalchemy.types import String, UnicodeText
+from sqlalchemy.dialects.mysql import DATETIME
 
 from purpler import base62
 
@@ -71,8 +72,8 @@ class Text(Base):
     guid = Column(String(12), primary_key=True, nullable=False)
     url = Column(String(255), nullable=True, index=True)
     content = Column(UnicodeText, nullable=True)
-    when = Column(DateTime(timezone=True), index=True,
-                  server_default=now())
+    when = Column(DATETIME(timezone=True, fsp=6), index=True,
+                  server_default=now(), default=datetime.datetime.utcnow())
 
 
 class Store(object):
