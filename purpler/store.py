@@ -73,7 +73,7 @@ class Text(Base):
     url = Column(String(255), nullable=True, index=True)
     content = Column(UnicodeText, nullable=True)
     when = Column(DATETIME(timezone=True, fsp=6), index=True,
-                  server_default=now(), default=datetime.datetime.utcnow())
+                  server_default=now(), default=datetime.datetime.utcnow)
 
 
 class Store(object):
