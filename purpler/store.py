@@ -167,15 +167,18 @@ class Store(object):
         return result[-1].when
 
     def get_by_time_in_context(self, url, time=None, count=None,
-                               containing=None, rlimit=1):
+                               containing=None, rlimit=1, lookahead=False):
         one_hour = datetime.timedelta(minutes=60)
         results = []
-        if time:
+        if time and not lookahead:
             timeless = time - one_hour
             timemore = time + one_hour
             query = self.session.query(Text).filter(
                 Text.url == url, Text.when >= timeless,
                 Text.when <= timemore)
+        elif time and lookahead:
+            query = self.session.query(Text).filter(
+                Text.url == url, Text.when >= time)
         else:
             query = self.session.query(Text).filter(
                 Text.url == url)
@@ -186,9 +189,11 @@ class Store(object):
                 containing = '%' + containing + '%'
                 query = query.filter(and_(not_(Text.content.like(intro))),
                                      Text.content.like(containing))
-            if count:
+            if count and not lookahead:
                 query = (query.order_by(Text.when.desc()).
                          limit(count).from_self().order_by(Text.when))
+            elif count and lookahead:
+                query = query.order_by(Text.when.asc()).limit(count)
             else:
                 query = query.order_by(Text.when)
             results = query.all()
@@ -197,8 +202,8 @@ class Store(object):
             raise
         finally:
             self.session.close()
-        # If we don't get any results go back in time up to 12 hours
-        if time and not results and rlimit < 12:
+        # If we don't get any results go back in time up to 24 hours
+        if time and not results and rlimit < 24:
             rlimit = rlimit + 1
             return self.get_by_time_in_context(url, time=timeless,
                                                count=count,

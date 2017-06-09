@@ -113,7 +113,10 @@ def lines_by_datetime(environ, start_response):
             earlier = ten_lines_ago_time
         else:
             earlier = timestamp - datetime.timedelta(minutes=60)
-        later = lines[-1].when
+        last_timestamp = lines[-1].when
+        next_after_last = storage.get_by_time_in_context('#%s' % context,
+                time=last_timestamp, count=2, lookahead=True)
+        later = next_after_last[-1].when
     else:
         earlier = timestamp - datetime.timedelta(minutes=60)
         later = timestamp + datetime.timedelta(minutes=60)
