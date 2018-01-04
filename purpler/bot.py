@@ -244,7 +244,7 @@ def run():
     parser.add_argument(
         '--password',
         dest='password',
-        default='purplerbot',
+        default='purpler',
         help='Password for the bot'
     )
     parser.add_argument(
