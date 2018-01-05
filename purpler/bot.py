@@ -38,7 +38,10 @@ COMMANDS = {
     'hist': 'show_history',
     'spy': 'show_mentions',
 }
-COMMANDER = re.compile('^p!(%s)(.*)?$' % '|'.join(COMMANDS.keys()))
+COMMANDER_PREFIX = 'p!'
+COMMANDER_SUFFIX = '(%s)(.*)?$' % '|'.join(COMMANDS.keys())
+COMMANDER_OBLIGATORY = re.compile('^%s%s' % (COMMANDER_PREFIX, COMMANDER_SUFFIX))
+COMMANDER_OPTIONAL = re.compile('^(?:%s)?%s' % (COMMANDER_PREFIX, COMMANDER_SUFFIX))
 EMBEDDER = re.compile(r'\[([tl]) ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
@@ -167,18 +170,19 @@ class PurplerBot(bot.SingleServerIRCBot):
         message = e.arguments[0]
         self._log(e, message, nick, action=True)
 
-    def _handle_command(self, c, e):
+    def _handle_command(self, c, e, prefix_optional=False):
         nick = e.source.nick
         message = e.arguments[0]
 
-        command = COMMANDER.search(message)
+        pattern = COMMANDER_OPTIONAL if prefix_optional else COMMANDER_OBLIGATORY
+        command = pattern.search(message)
         if command:
             func = command.group(1)
             arg = command.group(2)
             return getattr(self, COMMANDS[func])(c, e, arg)
 
     def on_privmsg(self, c, e):
-        self._handle_command(c, e)
+        self._handle_command(c, e, prefix_optional=True)
 
     def on_pubmsg(self, c, e):
         # XXX at the moment we don't see messages that we send so
