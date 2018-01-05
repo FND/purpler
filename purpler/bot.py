@@ -39,7 +39,7 @@ COMMANDS = {
     'spy': 'show_mentions',
 }
 COMMANDER = re.compile('^p!(%s)(.*)?$' % '|'.join(COMMANDS.keys()))
-TRANSCLUDER = re.compile(r'\[t ([A-Za-z0-9]+)\]')
+EMBEDDER = re.compile(r'\[([tl]) ([A-Za-z0-9]+)\]')
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -189,18 +189,23 @@ class PurplerBot(bot.SingleServerIRCBot):
 
         self._handle_command(c, e)
 
-        results = TRANSCLUDER.finditer(message)
+        results = EMBEDDER.finditer(message)
         if results:
             for result in results:
-                guid = result.group(1)
-                self.log.debug('saw guid %s', guid)
+                mode = result.group(1)
+                guid = result.group(2)
+                self.log.debug('saw guid %s (%s)', guid, mode)
                 outgoing_message = self.storage.get(guid)
                 if outgoing_message:
-                    out_nick, the_message = outgoing_message.content.split(':', 1)
-                    c.privmsg(e.target, '<%s> %s [%s] [n %s]' % (
-                        out_nick.strip(), the_message.strip(),
-                        outgoing_message.when,
-                        outgoing_message.guid))
+                    if mode == "l":
+                        msg = '%s/%s' % (self.web_url, outgoing_message.guid)
+                    else:
+                        out_nick, the_message = outgoing_message.content.split(':', 1)
+                        msg = '<%s> %s [%s] [n %s]' % (
+                            out_nick.strip(), the_message.strip(),
+                            outgoing_message.when,
+                            outgoing_message.guid)
+                    c.privmsg(e.target, msg)
         self._log(e, message, nick)
 
     def _log(self, e, message, nick, action=False):
