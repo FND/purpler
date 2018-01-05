@@ -39,7 +39,7 @@ COMMANDS = {
     'spy': 'show_mentions',
 }
 COMMANDER_PREFIX = 'p!'
-COMMANDER_SUFFIX = '(%s)(.*)?$' % '|'.join(COMMANDS.keys())
+COMMANDER_SUFFIX = r'(%s)\b(.*)?$' % '|'.join(COMMANDS.keys())
 COMMANDER_OBLIGATORY = re.compile('^%s%s' % (COMMANDER_PREFIX, COMMANDER_SUFFIX))
 COMMANDER_OPTIONAL = re.compile('^(?:%s)?%s' % (COMMANDER_PREFIX, COMMANDER_SUFFIX))
 EMBEDDER = re.compile(r'\[([tl]) ([A-Za-z0-9]+)\]')
