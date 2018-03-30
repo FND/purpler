@@ -18,8 +18,6 @@ import uuid
 
 
 ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-# TODO(cdent): Make this per installation.
-NAMESPACE = uuid.UUID('0B4CCF27-3676-4DF4-A1D6-352919D4D6C7')
 
 
 def base62_encode(num, alphabet=ALPHABET):
