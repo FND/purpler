@@ -25,6 +25,8 @@ import re
 import ssl
 import time
 
+from ib3 import auth
+from ib3 import connection as conn
 from irc import bot
 from irc import connection
 from sqlalchemy import exc
@@ -47,17 +49,16 @@ EMBEDDER = re.compile(r'\[([tl]) ([A-Za-z0-9]+)\]')
 logging.basicConfig(level=logging.DEBUG)
 
 
-class PurplerBot(bot.SingleServerIRCBot):
+class PurplerBot(auth.SASL, conn.SSL, bot.SingleServerIRCBot):
     def __init__(self, db_url, server, port, channels, nickname,
                  password, darkchannels, server_password=None, web_url=None):
-        if port == 6697:
-            factory = connection.Factory(wrapper=ssl.wrap_socket)
-            super(PurplerBot, self).__init__([(server, port, server_password)],
-                                             nickname, nickname,
-                                             connect_factory=factory)
-        else:
-            super(PurplerBot, self).__init__([(server, port, server_password)],
-                                             nickname, nickname)
+
+        super(PurplerBot, self).__init__(
+                server_list=[(server, port)],
+                nickname=nickname,
+                realname=nickname,
+                ident_password=password,
+                channels=channels)
 
         self.channel_list = channels
         self.darkchannels = darkchannels
@@ -66,26 +67,6 @@ class PurplerBot(bot.SingleServerIRCBot):
         self.web_url = web_url
         self.log = logging.getLogger(__name__)
         self.storage = store.Store(db_url)
-
-    def on_nicknameinuse(self, c, e):
-        self.log.info('Nick previously in use, recovering.')
-        c.nick(c.get_nickname() + "_")
-        c.privmsg("nickserv", "identify %s " % self.password)
-        c.privmsg("nickserv", "ghost %s %s" % (self.nickname, self.password))
-        c.privmsg("nickserv", "release %s %s"
-                  % (self.nickname, self.password))
-        time.sleep(1)
-        c.nick(self.nickname)
-        self.log.info('Nick previously in use, recovered.')
-
-    def on_welcome(self, c, e):
-        self.log.info('Identifying with IRC server.')
-        c.privmsg("nickserv", "identify %s " % self.password)
-        self.log.info('Identified with IRC server.')
-        for channel in self.channel_list:
-            c.join(channel)
-            self.log.info('Joined channel %s' % channel)
-            time.sleep(0.5)
 
     def show_help(self, c, e, arg=None):
         nick = e.source.nick
