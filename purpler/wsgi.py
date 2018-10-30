@@ -99,7 +99,12 @@ def lines_by_datetime(environ, start_response):
         raise httpexceptor.HTTP404('no logs')
     # XXX currently IRC only
     if timestamp:
-        timestamp = iso8601.parse_date(timestamp)
+        try:
+            timestamp = iso8601.parse_date(timestamp)
+        except iso8601.ParseError as exc:
+            LOGGER.debug('bad timestamp %s', timestamp)
+            raise httpexceptor.HTTP400('Bad timestamp %s: %s' %
+                    (timestamp, exc))
     else:
         timestamp = datetime.datetime.utcnow()
         raise httpexceptor.HTTP302('/logs/%s?dated=%s#bottom'
