@@ -188,7 +188,7 @@ class PurplerBot(auth.SASL, conn.SSL, bot.SingleServerIRCBot):
                         out_nick, the_message = outgoing_message.content.split(':', 1)
                         msg = '<%s> %s [%s] [n %s]' % (
                             out_nick.strip(), the_message.strip(),
-                            outgoing_message.when,
+                            f'{outgoing_message.when:%Y-%m-%d %H:%M}',
                             outgoing_message.guid)
                     c.privmsg(e.target, msg)
         self._log(e, message, nick)
